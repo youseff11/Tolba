@@ -1,0 +1,30 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Django backend (8000)",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "${workspaceFolder}/backend/.venv/Scripts/python.exe",
+      "program": "${workspaceFolder}/backend/manage.py",
+      "args": ["runserver", "127.0.0.1:8000"],
+      "cwd": "${workspaceFolder}/backend",
+      "django": true,
+      "justMyCode": true
+    },
+    {
+      "name": "React frontend (5173)",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run dev",
+      "cwd": "${workspaceFolder}/frontend"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "▶ VisionSeek: Backend + Frontend",
+      "configurations": ["Django backend (8000)", "React frontend (5173)"],
+      "stopAll": true
+    }
+  ]
+}
