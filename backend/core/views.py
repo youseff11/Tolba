@@ -65,6 +65,9 @@ class HealthView(APIView):
 
     def get(self, request):
         ai = {"base_url": aiconfig.base_url(), "mock": settings.VISIONSEEK_MOCK}
+        if aiconfig.browser_direct():
+            # The browser checks the AI server itself; this host may not be able to reach it.
+            return Response({"backend": "ok", "ai": {**ai, "direct": True}})
         try:
             ai.update(vs.health())
             ai["reachable"] = True
@@ -88,6 +91,7 @@ class AISettingsView(APIView):
             "has_key": bool(key),
             "key_hint": f"…{key[-4:]}" if len(key) > 8 else ("••••" if key else ""),
             "source": "ui" if row and row.base_url else "env",
+            "browser_direct": bool(row and row.browser_direct),
         }
 
     def get(self, request):
@@ -105,8 +109,12 @@ class AISettingsView(APIView):
         row.base_url = url
         if "api_key" in request.data and request.data.get("api_key") is not None:
             row.api_key = str(request.data["api_key"]).strip()
+        if "browser_direct" in request.data:
+            row.browser_direct = bool(request.data["browser_direct"])
         row.save()
         out = self._out()
+        if row.browser_direct:
+            return Response(out)  # the browser runs the connection test itself
         try:
             vs.health()
             out["reachable"] = True
@@ -115,11 +123,35 @@ class AISettingsView(APIView):
         return Response(out)
 
 
+class AIConfigView(APIView):
+    """What the browser needs to call the AI server directly (only when direct mode is on)."""
+
+    def get(self, request):
+        if not aiconfig.browser_direct():
+            return Response({"direct": False})
+        base, key = aiconfig.get()
+        return Response({"direct": True, "base_url": base, "api_key": key})
+
+
 class AnalyticsView(APIView):
     def get(self, request):
         from .analytics import build
 
         return Response(build(request.user))
+
+    def post(self, request):
+        """Direct mode: the browser fetched events + cameras from the AI and sends them here."""
+        from .analytics import build
+
+        ev, cams = request.data.get("events"), request.data.get("cameras")
+        return Response(
+            build(
+                request.user,
+                events=ev if isinstance(ev, list) else [],
+                cameras=cams if isinstance(cams, list) else [],
+                ai_error=request.data.get("ai_error") or None,
+            )
+        )
 
 
 class DashboardView(APIView):
@@ -192,6 +224,28 @@ class VideosView(APIView):
         return Response({**result, "record": VideoRecordSerializer(rec).data}, status=status.HTTP_202_ACCEPTED)
 
 
+class VideoRecordView(APIView):
+    """Direct mode: the browser uploaded the video to the AI itself; index it here."""
+
+    def post(self, request):
+        d = request.data
+        code = str(d.get("video_code") or "").strip()
+        if not code:
+            return Response({"detail": "video_code is required"}, status=status.HTTP_400_BAD_REQUEST)
+        rec, _ = VideoRecord.objects.update_or_create(
+            code=code[:32],
+            defaults=dict(
+                camera_code=str(d.get("camera_code") or "")[:32],
+                start_time=str(d.get("start_time") or "")[:64],
+                original_name=str(d.get("original_name") or "")[:255],
+                size_bytes=int(d.get("size_bytes") or 0),
+                status=str(d.get("status") or "uploaded")[:16],
+                uploaded_by=request.user,
+            ),
+        )
+        return Response(VideoRecordSerializer(rec).data, status=status.HTTP_201_CREATED)
+
+
 class VideoSyncView(APIView):
     """The AI API has no 'list videos': probe VID-0001..VID-N and index the ones that exist."""
 
@@ -199,6 +253,10 @@ class VideoSyncView(APIView):
 
     def post(self, request):
         from concurrent.futures import ThreadPoolExecutor
+
+        if isinstance(request.data.get("videos"), list):  # direct mode: the browser probed the AI
+            found = [(str(v["code"]), v) for v in request.data["videos"] if isinstance(v, dict) and v.get("code")]
+            return Response(self._store(found))
 
         def probe(n):
             code = f"VID-{n:04d}"
@@ -211,6 +269,10 @@ class VideoSyncView(APIView):
 
         with ThreadPoolExecutor(max_workers=8) as pool:
             found = [(c, d) for c, d in pool.map(probe, range(1, self.MAX_CODE + 1)) if d]
+        return Response(self._store(found))
+
+    @staticmethod
+    def _store(found):
         added = 0
         for code, d in found:
             _, created = VideoRecord.objects.update_or_create(
@@ -224,7 +286,7 @@ class VideoSyncView(APIView):
                 ),
             )
             added += created
-        return Response({"found": len(found), "added": added})
+        return {"found": len(found), "added": added}
 
 
 class VideoDetailView(APIView):
@@ -232,6 +294,11 @@ class VideoDetailView(APIView):
         data = vs.video_status(code)
         _sync_record(code, data)
         return Response(data)
+
+    def post(self, request, code):
+        """Direct mode: the browser read the status from the AI; keep the local index in step."""
+        _sync_record(code, request.data if isinstance(request.data, dict) else {})
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class VideoTracksView(APIView):
@@ -269,6 +336,22 @@ class SearchView(APIView):
             hits=len(data.get("hits", [])),
         )
         return Response(data)
+
+
+class SearchLogView(APIView):
+    """Direct mode: the browser ran the search on the AI; record it for history / analytics."""
+
+    def post(self, request):
+        d = request.data
+        q = str(d.get("q") or "").strip()
+        if not q:
+            return Response({"detail": "q is required"}, status=status.HTTP_400_BAD_REQUEST)
+        filters = d.get("filters") if isinstance(d.get("filters"), dict) else {}
+        SearchLog.objects.create(
+            user=request.user, query=q[:500], query_en=str(d.get("query_en") or "")[:500],
+            filters=filters, hits=int(d.get("hits") or 0),
+        )
+        return Response(status=status.HTTP_201_CREATED)
 
 
 class SearchHistoryView(APIView):

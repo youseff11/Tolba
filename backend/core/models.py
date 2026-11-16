@@ -60,6 +60,9 @@ class AISettings(models.Model):
 
     base_url = models.CharField(max_length=500, blank=True, default="")
     api_key = models.CharField(max_length=500, blank=True, default="")
+    # The browser calls the AI server itself (needed when this host can't reach it, e.g. a
+    # PythonAnywhere free account whose outbound proxy blocks trycloudflare.com).
+    browser_direct = models.BooleanField(default=False)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):

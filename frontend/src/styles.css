@@ -818,10 +818,10 @@ select { cursor: pointer; }
 /* ---------- connection banner ---------- */
 .conn-banner {
   display: flex; align-items: center; gap: 12px; padding: 12px 28px; border-bottom: 1px solid; font-size: 13px;
-  position: sticky; top: 61px; z-index: 19; animation: slideIn 0.2s ease-out;
+  position: sticky; top: 61px; z-index: 19;
 }
 .conn-banner .grow { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .conn-banner small { opacity: 0.8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.conn-banner.bad { background: var(--bad-soft); color: var(--bad-ink); border-color: color-mix(in srgb, var(--bad) 30%, transparent); }
-.conn-banner.warn { background: var(--warn-soft); color: var(--warn-ink); border-color: color-mix(in srgb, var(--warn) 30%, transparent); }
+.conn-banner.bad { background: linear-gradient(var(--bad-soft), var(--bad-soft)), var(--bg); color: var(--bad-ink); border-color: color-mix(in srgb, var(--bad) 30%, transparent); }
+.conn-banner.warn { background: linear-gradient(var(--warn-soft), var(--warn-soft)), var(--bg); color: var(--warn-ink); border-color: color-mix(in srgb, var(--warn) 30%, transparent); }
 @media (max-width: 860px) { .conn-banner { padding: 10px 16px; top: 57px; } }

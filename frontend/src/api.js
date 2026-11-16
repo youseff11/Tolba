@@ -1,11 +1,17 @@
 import axios from 'axios';
+import { directAdapter, getAiConfig, isAiRoute } from './aiDirect.js';
 
 // In dev Vite proxies /api to Django. For a separate deployment set VITE_API_URL=https://host/api
 const api = axios.create({ baseURL: import.meta.env.VITE_API_URL || '/api' });
 
-api.interceptors.request.use((cfg) => {
+api.interceptors.request.use(async (cfg) => {
   const t = localStorage.getItem('vs_token');
   if (t) cfg.headers.Authorization = `Token ${t}`;
+  // Direct mode: AI requests go from the browser straight to the AI server (see aiDirect.js).
+  if (t && isAiRoute(cfg)) {
+    const aiCfg = await getAiConfig();
+    if (aiCfg.direct) cfg.adapter = (c) => directAdapter(c, aiCfg);
+  }
   return cfg;
 });
 

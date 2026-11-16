@@ -1,5 +1,6 @@
 import { CheckCircle2, KeyRound, Save, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { resetAiConfig } from '../aiDirect.js';
 import api, { errMsg } from '../api.js';
 import { useHealth } from '../health.jsx';
 import { useT } from '../i18n.jsx';
@@ -15,13 +16,14 @@ export default function AiSettings() {
   const [url, setUrl] = useState('');
   const [key, setKey] = useState('');
   const [clearKey, setClearKey] = useState(false);
+  const [direct, setDirect] = useState(false);
   const [error, setError] = useState(null);
   const [result, setResult] = useState(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     api.get('/ai-settings').then(
-      (r) => { setCur(r.data); setUrl(r.data.base_url || ''); },
+      (r) => { setCur(r.data); setUrl(r.data.base_url || ''); setDirect(!!r.data.browser_direct); },
       (e) => setError(errMsg(e)),
     );
   }, []);
@@ -32,7 +34,7 @@ export default function AiSettings() {
     setError(null);
     setResult(null);
     try {
-      const body = { base_url: url };
+      const body = { base_url: url, browser_direct: direct };
       if (key.trim()) body.api_key = key.trim();
       else if (clearKey) body.api_key = '';
       const r = await api.put('/ai-settings', body, { timeout: 30000 });
@@ -40,7 +42,14 @@ export default function AiSettings() {
       setUrl(r.data.base_url);
       setKey('');
       setClearKey(false);
-      setResult(r.data);
+      resetAiConfig();
+      if (r.data.browser_direct) {
+        // Direct mode: test from this browser, the same way every page will reach the AI.
+        const h = await api.get('/health', { timeout: 30000 });
+        setResult({ reachable: !!h.data.ai?.reachable, error: h.data.ai?.error });
+      } else {
+        setResult(r.data);
+      }
       toast.success(t('saved'));
       check();
     } catch (err) {
@@ -76,6 +85,13 @@ export default function AiSettings() {
             <input type="checkbox" checked={clearKey} onChange={(e) => setClearKey(e.target.checked)} /> {t('aiKeyClear')}
           </label>
         )}
+        <label className="row" style={{ gap: 8, alignItems: 'flex-start' }}>
+          <input type="checkbox" checked={direct} onChange={(e) => setDirect(e.target.checked)} style={{ marginTop: 3 }} />
+          <span>
+            <b>{t('aiDirect')}</b>
+            <small className="muted xs" style={{ display: 'block' }}>{t('aiDirectHint')}</small>
+          </span>
+        </label>
         {result && (
           <div className="row xs" style={{ gap: 6, color: result.reachable ? 'var(--good)' : 'var(--bad)' }}>
             {result.reachable ? <CheckCircle2 size={16} /> : <XCircle size={16} />}

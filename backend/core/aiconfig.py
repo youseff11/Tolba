@@ -31,3 +31,8 @@ def base_url() -> str:
 
 def api_key() -> str:
     return get()[1]
+
+
+def browser_direct() -> bool:
+    row = _row()
+    return bool(row and row.browser_direct)

@@ -41,16 +41,21 @@ def _timeline(events):
     return {"bucket_sec": size, "buckets": buckets}
 
 
-def build(user):
+_FETCH = object()
+
+
+def build(user, events=_FETCH, cameras=_FETCH, ai_error=None):
+    """events / cameras: pass them when the browser already fetched them from the AI (direct mode)."""
     from cases.models import Case, CaseItem
 
-    out = {"ai_error": None}
-    events, cameras = [], []
-    try:
-        events = vs.events({"limit": 500})
-        cameras = vs.list_cameras()
-    except vs.VisionSeekError as exc:
-        out["ai_error"] = exc.detail
+    out = {"ai_error": ai_error}
+    if events is _FETCH or cameras is _FETCH:
+        events, cameras = [], []
+        try:
+            events = vs.events({"limit": 500})
+            cameras = vs.list_cameras()
+        except vs.VisionSeekError as exc:
+            out["ai_error"] = exc.detail
 
     out["cameras"] = len(cameras)
     out["sites"] = len({c.get("site") for c in cameras if c.get("site")})
