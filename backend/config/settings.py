@@ -83,6 +83,8 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+# Built React app (npm run build). Django serves index.html; the web server serves /assets/.
+FRONTEND_DIST = BASE_DIR.parent / "frontend" / "dist"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Videos are streamed to the AI server; keep big uploads on disk, not in memory.
@@ -96,6 +98,10 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
     "EXCEPTION_HANDLER": "core.exceptions.exception_handler",
 }
+
+CSRF_TRUSTED_ORIGINS = env_list("CSRF_TRUSTED_ORIGINS", "")
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 CORS_ALLOWED_ORIGINS = env_list("CORS_ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
 
