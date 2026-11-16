@@ -146,7 +146,9 @@ function UploadCard({ cams }) {
     }
   }
 
-  const big = file && file.size > 100 * 1024 * 1024;
+  // Cloudflare quick tunnels refuse any request body over 100 MB (they answer 413 with no CORS headers,
+  // which the browser only reports as a network error), so stop such files before uploading.
+  const tooBig = file && file.size > 100 * 1000 * 1000;
 
   return (
     <Card icon={CloudUpload} title={t('uploadVideo')} subtitle={t('uploadSub')}>
@@ -180,7 +182,7 @@ function UploadCard({ cams }) {
           </div>
         )}
         <input ref={inputRef} type="file" accept="video/*,.mkv,.avi" hidden onChange={(e) => e.target.files[0] && setFile(e.target.files[0])} />
-        {big && <div className="alert alert-warn"><span className="grow">{t('bigFileWarn')}</span></div>}
+        {tooBig && <div className="alert alert-error"><span className="grow">{t('bigFileBlock', { size: fmtBytes(file.size) })}</span></div>}
         <label className="field">
           <span>{t('camera')}</span>
           <input list="cam-list" value={camera} onChange={(e) => setCamera(e.target.value)} required pattern="[Cc][Aa][Mm]-\d{2,}" />
@@ -203,7 +205,7 @@ function UploadCard({ cams }) {
           </div>
         )}
         <ErrorBox error={error} />
-        <button className="btn btn-primary btn-block btn-lg" disabled={progress != null || !file}>
+        <button className="btn btn-primary btn-block btn-lg" disabled={progress != null || !file || tooBig}>
           <CloudUpload size={18} /> {t('uploadBtn')}
         </button>
         <small className="muted xs">{t('oneAtATime')}</small>

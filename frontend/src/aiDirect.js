@@ -153,9 +153,22 @@ export async function directAdapter(cfg, aiCfg) {
   if (url === '/videos' && m === 'post') {
     const fd = cfg.data;
     const file = fd.get('file');
-    const result = (
-      await ai(aiCfg, cfg, 'post', '/api/v1/videos', { data: fd, timeout: 0, onUploadProgress: cfg.onUploadProgress })
-    ).data;
+    let result;
+    try {
+      result = (
+        await ai(aiCfg, cfg, 'post', '/api/v1/videos', { data: fd, timeout: 0, onUploadProgress: cfg.onUploadProgress })
+      ).data;
+    } catch (e) {
+      if (e.response?.data?.source === 'ai' && /unreachable/.test(e.response.data.detail || '')) {
+        // No HTTP answer the browser can read: almost always the tunnel cutting the upload.
+        e.response.data.detail =
+          `Upload was cut before the AI server answered (${(file?.size / 1e6 || 0).toFixed(0)} MB). ` +
+          'The Cloudflare tunnel rejects files over 100 MB and drops uploads the AI takes more than 100 s to accept. ' +
+          'Compress or split the video, or check that the AI server is running.';
+        e.message = e.response.data.detail;
+      }
+      throw e;
+    }
     const record = (
       await django.post('/videos/record', {
         video_code: result.video_code,
