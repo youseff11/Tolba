@@ -1,0 +1,7 @@
+# VisionSeek Web – Python dependencies (Django backend)
+# Install from the project root:
+#   pip install -r requirements.txt
+#
+# The pinned list lives in backend/requirements.txt (used by setup.bat).
+# The frontend (React) dependencies are in frontend/package.json -> npm install
+-r backend/requirements.txt
