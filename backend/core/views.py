@@ -3,10 +3,11 @@ from django.contrib.auth import authenticate
 from django.http import HttpResponse
 from rest_framework import status
 from rest_framework.authtoken.models import Token
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from . import aiconfig
 from . import visionseek as vs
 from .models import SearchLog, VideoRecord
 from .serializers import (
@@ -63,13 +64,55 @@ class HealthView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        ai = {"base_url": settings.VISIONSEEK_BASE_URL, "mock": settings.VISIONSEEK_MOCK}
+        ai = {"base_url": aiconfig.base_url(), "mock": settings.VISIONSEEK_MOCK}
         try:
             ai.update(vs.health())
             ai["reachable"] = True
         except vs.VisionSeekError as exc:
             ai.update(reachable=False, error=exc.detail)
         return Response({"backend": "ok", "ai": ai})
+
+
+class AISettingsView(APIView):
+    """Admins change the AI server link / key from the UI (no redeploy when the tunnel URL changes)."""
+
+    permission_classes = [IsAdminUser]
+
+    def _out(self):
+        from .models import AISettings
+
+        row = AISettings.objects.order_by("id").first()
+        base, key = aiconfig.get()
+        return {
+            "base_url": base,
+            "has_key": bool(key),
+            "key_hint": f"…{key[-4:]}" if len(key) > 8 else ("••••" if key else ""),
+            "source": "ui" if row and row.base_url else "env",
+        }
+
+    def get(self, request):
+        return Response(self._out())
+
+    def put(self, request):
+        from .models import AISettings
+
+        url = aiconfig.normalize_url(request.data.get("base_url", ""))
+        if not url.startswith(("http://", "https://")):
+            return Response({"detail": "Link must start with http:// or https://"}, status=status.HTTP_400_BAD_REQUEST)
+        row = AISettings.objects.order_by("id").first() or AISettings()
+        if not row.base_url:  # first save from the UI: keep the .env key unless a new one is given
+            row.api_key = aiconfig.api_key()
+        row.base_url = url
+        if "api_key" in request.data and request.data.get("api_key") is not None:
+            row.api_key = str(request.data["api_key"]).strip()
+        row.save()
+        out = self._out()
+        try:
+            vs.health()
+            out["reachable"] = True
+        except vs.VisionSeekError as exc:
+            out.update(reachable=False, error=exc.detail)
+        return Response(out)
 
 
 class AnalyticsView(APIView):

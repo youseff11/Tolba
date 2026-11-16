@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import SearchLog, VideoRecord
+from .models import AISettings, SearchLog, VideoRecord
 
 
 @admin.register(VideoRecord)
@@ -14,3 +14,5 @@ class VideoRecordAdmin(admin.ModelAdmin):
 class SearchLogAdmin(admin.ModelAdmin):
     list_display = ("query", "query_en", "hits", "user", "created_at")
     search_fields = ("query", "query_en")
+
+admin.site.register(AISettings)

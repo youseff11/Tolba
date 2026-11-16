@@ -57,25 +57,20 @@ export function StatCard({ icon: Icon, label, value, hint, tone = 'primary', to 
       )}
       <div className="stat-body">
         <div className="stat-label">{label}</div>
-        <div className="stat-value">{value ?? <span className="skeleton" style={{ display: 'inline-block', width: 48, height: 26 }} />}</div>
+        <div className="stat-value">{value ?? ' '}</div>
         {hint && <div className="stat-hint">{hint}</div>}
       </div>
     </Tag>
   );
 }
 
-export function Skeleton({ h = 16, w = '100%', r, style }) {
-  return <div className="skeleton" style={{ height: h, width: w, borderRadius: r, ...style }} />;
+// Loading placeholders are disabled site-wide: content just appears when it is ready.
+export function Skeleton() {
+  return null;
 }
 
-export function SkeletonCards({ n = 6, h = 300 }) {
-  return (
-    <div className="cards-grid">
-      {Array.from({ length: n }, (_, i) => (
-        <Skeleton key={i} h={h} r={14} />
-      ))}
-    </div>
-  );
+export function SkeletonCards() {
+  return null;
 }
 
 export function Spinner({ label }) {

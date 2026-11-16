@@ -53,3 +53,14 @@ class CameraZones(models.Model):
 
     def __str__(self):
         return self.camera_code
+
+
+class AISettings(models.Model):
+    """Single row: the AI server link + key, editable from the UI (overrides .env when set)."""
+
+    base_url = models.CharField(max_length=500, blank=True, default="")
+    api_key = models.CharField(max_length=500, blank=True, default="")
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.base_url or "(from .env)"

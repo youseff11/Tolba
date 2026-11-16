@@ -1,6 +1,7 @@
-import { RefreshCw, ServerOff, WifiOff } from 'lucide-react';
+import { KeyRound, RefreshCw, ServerOff, WifiOff } from 'lucide-react';
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import api from './api.js';
+import { useAuth } from './auth.jsx';
 import { useT } from './i18n.jsx';
 import { useToast } from './toast.jsx';
 
@@ -60,6 +61,7 @@ export const useHealth = () => useContext(HealthCtx);
 export function ConnectionBanner() {
   const { t } = useT();
   const { state, ai, check, checking } = useHealth();
+  const { user } = useAuth();
   if (state === 'ok') return null;
   const backend = state === 'backend-down';
   return (
@@ -70,6 +72,11 @@ export function ConnectionBanner() {
         <span>{backend ? t('connBackendHint') : t('connAiHint')}</span>
         {!backend && ai?.error && <small className="mono">{ai.error.slice(0, 160)}</small>}
       </div>
+      {!backend && user?.is_staff && (
+        <button className="btn btn-sm" onClick={() => window.dispatchEvent(new Event('vs-open-ai-settings'))}>
+          <KeyRound size={14} /> {t('aiChangeLink')}
+        </button>
+      )}
       <button className="btn btn-sm" onClick={check} disabled={checking}>
         <RefreshCw size={14} className={checking ? 'spin' : ''} /> {t('retry')}
       </button>

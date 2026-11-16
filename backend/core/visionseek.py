@@ -12,6 +12,8 @@ import time
 import requests
 from django.conf import settings
 
+from . import aiconfig
+
 
 class VisionSeekError(Exception):
     def __init__(self, status: int, detail: str):
@@ -21,13 +23,14 @@ class VisionSeekError(Exception):
 
 
 def _url(path: str) -> str:
-    return f"{settings.VISIONSEEK_BASE_URL}{path}"
+    return f"{aiconfig.base_url()}{path}"
 
 
 def _headers() -> dict:
     h = {"Accept": "application/json"}
-    if settings.VISIONSEEK_API_KEY:
-        h["X-API-Key"] = settings.VISIONSEEK_API_KEY
+    key = aiconfig.api_key()
+    if key:
+        h["X-API-Key"] = key
     return h
 
 
@@ -56,13 +59,13 @@ def _request(method: str, path: str, *, timeout: float | None = None, **kwargs) 
         except requests.Timeout:
             if not last:
                 continue
-            raise VisionSeekError(504, f"AI service timed out ({settings.VISIONSEEK_BASE_URL})")
+            raise VisionSeekError(504, f"AI service timed out ({aiconfig.base_url()})")
         except requests.RequestException as exc:
             if not last:
                 time.sleep(0.6 * (n + 1))
                 continue
             raise VisionSeekError(
-                502, f"AI service unreachable at {settings.VISIONSEEK_BASE_URL} ({exc.__class__.__name__})"
+                502, f"AI service unreachable at {aiconfig.base_url()} ({exc.__class__.__name__})"
             )
         if resp.status_code in RETRY_STATUS and not last:
             time.sleep(0.6 * (n + 1))
@@ -78,7 +81,7 @@ def _request(method: str, path: str, *, timeout: float | None = None, **kwargs) 
             raise VisionSeekError(
                 502,
                 f"AI server is not reachable through its tunnel (HTTP {resp.status_code}: {title[:120]}). "
-                "The AI machine or cloudflared is down – restart it and update VISIONSEEK_BASE_URL if the link changed.",
+                "The AI machine or cloudflared is down – restart it and update the AI link in AI settings if it changed.",
             )
         try:
             detail = resp.json().get("detail", resp.text)
@@ -91,7 +94,7 @@ def _request(method: str, path: str, *, timeout: float | None = None, **kwargs) 
         status = resp.status_code
         if status == 401:
             # A wrong key is a server configuration problem, not the browser user's session.
-            status, detail = 502, "AI service rejected the API key (check VISIONSEEK_API_KEY)"
+            status, detail = 502, "AI service rejected the API key (check the API key in AI settings)"
         elif status >= 500 and status != 503:
             status = 502
         raise VisionSeekError(status, str(detail))

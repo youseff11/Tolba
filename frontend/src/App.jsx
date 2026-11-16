@@ -1,10 +1,11 @@
 import {
-  Briefcase, ChevronsLeft, ChevronsRight, Command, Languages, LayoutDashboard, LogOut, Menu, Moon, ScanEye, Search, Siren,
+  Briefcase, ChevronsLeft, ChevronsRight, Command, KeyRound, Languages, LayoutDashboard, LogOut, Menu, Moon, ScanEye, Search, Siren,
   Shapes, Sun, Video, Webcam,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Navigate, NavLink, Route, Routes, useLocation } from 'react-router-dom';
 import { useAuth } from './auth.jsx';
+import AiSettingsModal from './components/AiSettings.jsx';
 import CommandPalette from './components/CommandPalette.jsx';
 import { ConnectionBanner, HealthProvider, useHealth } from './health.jsx';
 import { Spinner } from './components/ui.jsx';
@@ -99,6 +100,12 @@ function Topbar({ onMenu, onCmd }) {
   const { user, signOut } = useAuth();
   const loc = useLocation();
   const [menu, setMenu] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
+  useEffect(() => {
+    const open = () => setAiOpen(true);
+    window.addEventListener('vs-open-ai-settings', open);
+    return () => window.removeEventListener('vs-open-ai-settings', open);
+  }, []);
   const parts = loc.pathname.split('/').filter(Boolean);
   return (
     <header className="topbar">
@@ -128,6 +135,11 @@ function Topbar({ onMenu, onCmd }) {
         <kbd className="hide-sm">Ctrl K</kbd>
       </button>
       <div className="top-actions">
+        {user.is_staff && (
+          <button className="icon-btn" onClick={() => setAiOpen(true)} title={t('aiSettings')}>
+            <KeyRound size={18} />
+          </button>
+        )}
         <button className="icon-btn" onClick={toggleTheme} title={t(resolved === 'dark' ? 'lightMode' : 'darkMode')}>
           {resolved === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
         </button>
@@ -157,6 +169,11 @@ function Topbar({ onMenu, onCmd }) {
                 <button onClick={toggleLang}>
                   <Languages size={16} /> {t('langToggle')}
                 </button>
+                {user.is_staff && (
+                  <button onClick={() => (setMenu(false), setAiOpen(true))}>
+                    <KeyRound size={16} /> {t('aiSettings')}
+                  </button>
+                )}
                 <button onClick={signOut}>
                   <LogOut size={16} className="flip-rtl" /> {t('logout')}
                 </button>
@@ -165,6 +182,7 @@ function Topbar({ onMenu, onCmd }) {
           )}
         </div>
       </div>
+      {aiOpen && <AiSettingsModal onClose={() => setAiOpen(false)} />}
     </header>
   );
 }

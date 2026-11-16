@@ -230,7 +230,7 @@ p { margin: 0; }
 .menu button:hover, .menu a:hover { background: var(--surface-3); text-decoration: none; }
 .mobile-only { display: none !important; }
 .content { padding: 28px; width: 100%; max-width: 1480px; margin: 0 auto; }
-.page { animation: fadeUp 0.28s ease-out; display: flex; flex-direction: column; gap: 20px; }
+.page { display: flex; flex-direction: column; gap: 20px; }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 @keyframes pop { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: none; } }
 
@@ -412,12 +412,7 @@ select { cursor: pointer; }
 .table .mono { white-space: nowrap; }
 .table tr.clickable { cursor: pointer; }
 
-/* ---------- skeleton / empty / spinner ---------- */
-.skeleton {
-  background: linear-gradient(90deg, var(--surface-3) 0%, var(--surface-2) 50%, var(--surface-3) 100%); background-size: 200% 100%;
-  animation: shimmer 1.3s infinite; border-radius: 8px;
-}
-@keyframes shimmer { to { background-position: -200% 0; } }
+/* ---------- empty / spinner ---------- */
 .empty { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; padding: 40px 20px; color: var(--muted); }
 .empty-icon {
   width: 60px; height: 60px; border-radius: 18px; display: grid; place-items: center; background: var(--surface-3); color: var(--muted);
@@ -447,7 +442,7 @@ select { cursor: pointer; }
 .ring span { position: absolute; inset: 0; display: grid; place-items: center; font-size: 12.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
 
 /* ---------- images ---------- */
-.img-loading { background: linear-gradient(90deg, var(--surface-3), var(--surface-2), var(--surface-3)); background-size: 200% 100%; animation: shimmer 1.2s infinite; }
+.img-loading { background: transparent; }
 .img-missing { display: grid; place-items: center; color: var(--muted); background: var(--surface-3); }
 
 /* ---------- hit / track cards ---------- */
