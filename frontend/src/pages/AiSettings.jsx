@@ -4,10 +4,10 @@ import api, { errMsg } from '../api.js';
 import { useHealth } from '../health.jsx';
 import { useT } from '../i18n.jsx';
 import { useToast } from '../toast.jsx';
-import { ErrorBox, Modal } from './ui.jsx';
+import { Card, ErrorBox, PageHeader } from '../components/ui.jsx';
 
-/** Admin dialog: change the AI server link (Cloudflare tunnel) and its X-API-Key without redeploying. */
-export default function AiSettingsModal({ onClose }) {
+/** Admin page: change the AI server link (Cloudflare tunnel) and its X-API-Key without redeploying. */
+export default function AiSettings() {
   const { t } = useT();
   const toast = useToast();
   const { check } = useHealth();
@@ -50,11 +50,19 @@ export default function AiSettingsModal({ onClose }) {
   }
 
   return (
-    <Modal title={<span className="row"><KeyRound size={18} /> {t('aiSettings')}</span>} onClose={onClose}>
+    <div className="page">
+      <PageHeader icon={KeyRound} title={t('aiSettings')} subtitle={t('aiSettingsSub')} />
+      <Card style={{ maxWidth: 720 }}>
+      {cur && (
+        <div className="row xs muted" style={{ gap: 6, marginBottom: 14 }}>
+          <span>{t('aiCurrent')}:</span> <b className="mono" dir="ltr">{cur.base_url || '—'}</b>
+          <span>· {t(cur.source === 'ui' ? 'aiSourceUi' : 'aiSourceEnv')}</span>
+        </div>
+      )}
       <form className="form" onSubmit={save}>
         <label className="field">
           <span>{t('aiLink')}</span>
-          <input value={url} onChange={(e) => setUrl(e.target.value)} required dir="ltr" autoFocus
+          <input value={url} onChange={(e) => setUrl(e.target.value)} required dir="ltr"
             placeholder="https://xxxx-xxxx.trycloudflare.com" className="mono" />
           <small className="muted xs">{t('aiLinkHint')}</small>
         </label>
@@ -76,10 +84,10 @@ export default function AiSettingsModal({ onClose }) {
         )}
         <ErrorBox error={error} />
         <div className="form-actions">
-          <button type="button" className="btn btn-ghost" onClick={onClose}>{t('cancel')}</button>
           <button className="btn btn-primary" disabled={busy || !cur}><Save size={16} /> {t('aiSaveTest')}</button>
         </div>
       </form>
-    </Modal>
+      </Card>
+    </div>
   );
 }

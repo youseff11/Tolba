@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 
 const en = {
-  aiSettings: 'AI server settings', aiLink: 'AI server link', aiLinkHint: 'The tunnel / server URL, without /docs.', aiKey: 'API key (X-API-Key)', aiKeyKeep: 'Leave empty to keep current key', aiKeyNone: 'No key set (optional)', aiKeyClear: 'Remove the saved key', aiSaveTest: 'Save & test', aiTestOk: 'Connected to the AI server.', aiTestFail: 'Saved, but the AI server did not answer:', aiChangeLink: 'Change link',
+  sec_system: 'System', nav_ai: 'AI connection', aiSettingsSub: 'Link and key of the VisionSeek AI server. Change it here whenever the tunnel URL changes.', aiCurrent: 'In use now', aiSourceUi: 'saved from here', aiSourceEnv: 'from .env file', aiSettings: 'AI server settings', aiLink: 'AI server link', aiLinkHint: 'The tunnel / server URL, without /docs.', aiKey: 'API key (X-API-Key)', aiKeyKeep: 'Leave empty to keep current key', aiKeyNone: 'No key set (optional)', aiKeyClear: 'Remove the saved key', aiSaveTest: 'Save & test', aiTestOk: 'Connected to the AI server.', aiTestFail: 'Saved, but the AI server did not answer:', aiChangeLink: 'Change link',
   // shell
   tagline: 'CCTV analysis & search', sec_overview: 'Overview', sec_investigation: 'Investigation', sec_data: 'Data',
   nav_dashboard: 'Dashboard', nav_search: 'Smart search', nav_events: 'Events', nav_cases: 'Cases', nav_videos: 'Videos',
@@ -125,7 +125,7 @@ const en = {
 };
 
 const ar = {
-  aiSettings: 'إعدادات سيرفر الذكاء الاصطناعي', aiLink: 'رابط سيرفر الذكاء الاصطناعي', aiLinkHint: 'رابط النفق أو السيرفر، من غير /docs.', aiKey: 'المفتاح (X-API-Key)', aiKeyKeep: 'سيبه فاضي علشان يفضل المفتاح الحالي', aiKeyNone: 'مفيش مفتاح (اختياري)', aiKeyClear: 'امسح المفتاح المحفوظ', aiSaveTest: 'حفظ واختبار', aiTestOk: 'اتوصل بسيرفر الذكاء الاصطناعي.', aiTestFail: 'اتحفظ، بس السيرفر مردّش:', aiChangeLink: 'تغيير الرابط',
+  sec_system: 'النظام', nav_ai: 'اتصال الذكاء الاصطناعي', aiSettingsSub: 'رابط ومفتاح سيرفر VisionSeek AI. غيّره من هنا كل ما رابط النفق يتغير.', aiCurrent: 'المستخدم دلوقتي', aiSourceUi: 'متحفظ من هنا', aiSourceEnv: 'من ملف ‎.env', aiSettings: 'إعدادات سيرفر الذكاء الاصطناعي', aiLink: 'رابط سيرفر الذكاء الاصطناعي', aiLinkHint: 'رابط النفق أو السيرفر، من غير /docs.', aiKey: 'المفتاح (X-API-Key)', aiKeyKeep: 'سيبه فاضي علشان يفضل المفتاح الحالي', aiKeyNone: 'مفيش مفتاح (اختياري)', aiKeyClear: 'امسح المفتاح المحفوظ', aiSaveTest: 'حفظ واختبار', aiTestOk: 'اتوصل بسيرفر الذكاء الاصطناعي.', aiTestFail: 'اتحفظ، بس السيرفر مردّش:', aiChangeLink: 'تغيير الرابط',
   tagline: 'تحليل كاميرات المراقبة والبحث فيها', sec_overview: 'نظرة عامة', sec_investigation: 'التحقيق', sec_data: 'البيانات',
   nav_dashboard: 'لوحة التحكم', nav_search: 'البحث الذكي', nav_events: 'الأحداث', nav_cases: 'القضايا', nav_videos: 'الفيديوهات',
   nav_cameras: 'الكاميرات', report: 'التقرير', collapse: 'تصغير', logout: 'تسجيل الخروج', langToggle: 'English',

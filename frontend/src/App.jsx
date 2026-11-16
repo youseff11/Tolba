@@ -3,13 +3,13 @@ import {
   Shapes, Sun, Video, Webcam,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Navigate, NavLink, Route, Routes, useLocation } from 'react-router-dom';
+import { Navigate, NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from './auth.jsx';
-import AiSettingsModal from './components/AiSettings.jsx';
 import CommandPalette from './components/CommandPalette.jsx';
 import { ConnectionBanner, HealthProvider, useHealth } from './health.jsx';
 import { Spinner } from './components/ui.jsx';
 import { useT } from './i18n.jsx';
+import AiSettings from './pages/AiSettings.jsx';
 import Cameras from './pages/Cameras.jsx';
 import CaseDetail from './pages/CaseDetail.jsx';
 import CaseReport from './pages/CaseReport.jsx';
@@ -28,6 +28,7 @@ const NAV = [
   ['overview', [['/', 'nav_dashboard', LayoutDashboard]]],
   ['investigation', [['/search', 'nav_search', Search], ['/events', 'nav_events', Siren], ['/cases', 'nav_cases', Briefcase]]],
   ['data', [['/videos', 'nav_videos', Video], ['/cameras', 'nav_cameras', Webcam], ['/zones', 'nav_zones', Shapes]]],
+  ['system', [['/ai-settings', 'nav_ai', KeyRound]], 'staff'],
 ];
 
 function readCollapsed() {
@@ -47,6 +48,7 @@ function useAiHealth() {
 function Sidebar({ collapsed, setCollapsed, open, onNavigate }) {
   const { t } = useT();
   const ai = useAiHealth();
+  const { user } = useAuth();
   return (
     <aside className={`sidebar ${collapsed ? 'collapsed' : ''} ${open ? 'open' : ''}`}>
       <div className="brand">
@@ -58,7 +60,7 @@ function Sidebar({ collapsed, setCollapsed, open, onNavigate }) {
           <small>{t('tagline')}</small>
         </div>
       </div>
-      {NAV.map(([section, links]) => (
+      {NAV.filter(([, , only]) => only !== 'staff' || user?.is_staff).map(([section, links]) => (
         <nav key={section}>
           <div className="nav-section hide-collapsed">{t(`sec_${section}`)}</div>
           {links.map(([to, key, Icon]) => (
@@ -92,7 +94,7 @@ function Sidebar({ collapsed, setCollapsed, open, onNavigate }) {
   );
 }
 
-const CRUMB = { search: 'nav_search', events: 'nav_events', cases: 'nav_cases', videos: 'nav_videos', cameras: 'nav_cameras', zones: 'nav_zones' };
+const CRUMB = { 'ai-settings': 'nav_ai', search: 'nav_search', events: 'nav_events', cases: 'nav_cases', videos: 'nav_videos', cameras: 'nav_cameras', zones: 'nav_zones' };
 
 function Topbar({ onMenu, onCmd }) {
   const { t, toggle: toggleLang } = useT();
@@ -100,12 +102,12 @@ function Topbar({ onMenu, onCmd }) {
   const { user, signOut } = useAuth();
   const loc = useLocation();
   const [menu, setMenu] = useState(false);
-  const [aiOpen, setAiOpen] = useState(false);
+  const nav = useNavigate();
   useEffect(() => {
-    const open = () => setAiOpen(true);
+    const open = () => nav('/ai-settings');
     window.addEventListener('vs-open-ai-settings', open);
     return () => window.removeEventListener('vs-open-ai-settings', open);
-  }, []);
+  }, [nav]);
   const parts = loc.pathname.split('/').filter(Boolean);
   return (
     <header className="topbar">
@@ -136,7 +138,7 @@ function Topbar({ onMenu, onCmd }) {
       </button>
       <div className="top-actions">
         {user.is_staff && (
-          <button className="icon-btn" onClick={() => setAiOpen(true)} title={t('aiSettings')}>
+          <button className="icon-btn" onClick={() => nav('/ai-settings')} title={t('aiSettings')}>
             <KeyRound size={18} />
           </button>
         )}
@@ -170,7 +172,7 @@ function Topbar({ onMenu, onCmd }) {
                   <Languages size={16} /> {t('langToggle')}
                 </button>
                 {user.is_staff && (
-                  <button onClick={() => (setMenu(false), setAiOpen(true))}>
+                  <button onClick={() => (setMenu(false), nav('/ai-settings'))}>
                     <KeyRound size={16} /> {t('aiSettings')}
                   </button>
                 )}
@@ -182,7 +184,6 @@ function Topbar({ onMenu, onCmd }) {
           )}
         </div>
       </div>
-      {aiOpen && <AiSettingsModal onClose={() => setAiOpen(false)} />}
     </header>
   );
 }
@@ -242,6 +243,7 @@ export default function App() {
             <Route path="/cases/:id/report" element={<CaseReport />} />
             <Route path="/cameras" element={<Cameras />} />
             <Route path="/zones" element={<Zones />} />
+            {user.is_staff && <Route path="/ai-settings" element={<AiSettings />} />}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
